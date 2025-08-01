@@ -45,6 +45,14 @@ export const validateAuthMethod = (authMethod: string): string | null => {
     return null;
   }
 
+  // 添加智谱AI的验证逻辑
+  if (authMethod === AuthType.USE_ZHIPU) {
+    if (!process.env.ZHIPU_API_KEY) {
+      return 'ZHIPU_API_KEY environment variable not found. You can enter it interactively or add it to your .env file.';
+    }
+    return null;
+  }
+
   return 'Invalid auth method selected.';
 };
 
@@ -58,4 +66,14 @@ export const setOpenAIBaseUrl = (baseUrl: string): void => {
 
 export const setOpenAIModel = (model: string): void => {
   process.env.OPENAI_MODEL = model;
+};
+
+// 添加设置智谱AI API密钥的函数
+export const setZhipuApiKey = (apiKey: string): void => {
+  process.env.ZHIPU_API_KEY = apiKey;
+};
+
+// 添加设置智谱AI模型的函数
+export const setZhipuModel = (model: string): void => {
+  process.env.ZHIPU_MODEL = model;
 };

@@ -93,6 +93,10 @@ function getRateLimitMessage(
       return RATE_LIMIT_ERROR_MESSAGE_USE_GEMINI;
     case AuthType.USE_VERTEX_AI:
       return RATE_LIMIT_ERROR_MESSAGE_VERTEX;
+      case AuthType.USE_ZHIPU: 
+      case AuthType.USE_OPENAI: 
+        return '\nPlease wait and try again later. If the problem persists, check your API key or quota limits.'; 
+
     default:
       return getRateLimitErrorMessageDefault(fallbackModel);
   }

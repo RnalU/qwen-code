@@ -15,8 +15,11 @@ import {
   setOpenAIApiKey,
   setOpenAIBaseUrl,
   setOpenAIModel,
+  setZhipuApiKey,
+  setZhipuModel,   
 } from '../../config/auth.js';
 import { OpenAIKeyPrompt } from './OpenAIKeyPrompt.js';
+import { ZhipuKeyPrompt } from './ZhipuKeyPrompt.js'; 
 
 interface AuthDialogProps {
   onSelect: (authMethod: AuthType | undefined, scope: SettingScope) => void;
@@ -45,7 +48,11 @@ export function AuthDialog({
     initialErrorMessage || null,
   );
   const [showOpenAIKeyPrompt, setShowOpenAIKeyPrompt] = useState(false);
-  const items = [{ label: 'OpenAI', value: AuthType.USE_OPENAI }];
+  const [showZhipuKeyPrompt, setShowZhipuKeyPrompt] = useState(false); 
+  const items = [
+    { label: 'OpenAI', value: AuthType.USE_OPENAI },
+    { label: 'Zhipu AI', value: AuthType.USE_ZHIPU } // 智谱AI选项
+  ];
 
   const initialAuthIndex = Math.max(
     0,
@@ -75,6 +82,10 @@ export function AuthDialog({
       if (authMethod === AuthType.USE_OPENAI && !process.env.OPENAI_API_KEY) {
         setShowOpenAIKeyPrompt(true);
         setErrorMessage(null);
+      } else if (authMethod === AuthType.USE_ZHIPU && !process.env.ZHIPU_API_KEY) {
+        // 添加智谱AI密钥提示的处理
+        setShowZhipuKeyPrompt(true);
+        setErrorMessage(null);
       } else {
         setErrorMessage(error);
       }
@@ -96,9 +107,26 @@ export function AuthDialog({
     onSelect(AuthType.USE_OPENAI, SettingScope.User);
   };
 
+  
+
   const handleOpenAIKeyCancel = () => {
     setShowOpenAIKeyPrompt(false);
     setErrorMessage('OpenAI API key is required to use OpenAI authentication.');
+  };
+
+   // 添加处理智谱AI密钥输入的函数
+   const handleZhipuKeySubmit = (apiKey: string, model?: string) => {
+    setZhipuApiKey(apiKey);
+    if (model) {
+      setZhipuModel(model);
+    }
+    setShowZhipuKeyPrompt(false);
+    onSelect(AuthType.USE_ZHIPU, SettingScope.User);
+  };
+
+  const handleZhipuKeyCancel = () => {
+    setShowZhipuKeyPrompt(false);
+    setErrorMessage('Zhipu AI API key is required to use Zhipu AI authentication.');
   };
 
   useInput((_input, key) => {
@@ -129,6 +157,16 @@ export function AuthDialog({
       <OpenAIKeyPrompt
         onSubmit={handleOpenAIKeySubmit}
         onCancel={handleOpenAIKeyCancel}
+      />
+    );
+  }
+
+  // 智谱AI密钥提示的渲染逻辑
+  if (showZhipuKeyPrompt) {
+    return (
+      <ZhipuKeyPrompt
+        onSubmit={handleZhipuKeySubmit}
+        onCancel={handleZhipuKeyCancel}
       />
     );
   }

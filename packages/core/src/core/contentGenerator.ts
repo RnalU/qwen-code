@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+
 import {
   CountTokensResponse,
   GenerateContentResponse,
@@ -44,6 +45,7 @@ export enum AuthType {
   USE_VERTEX_AI = 'vertex-ai',
   CLOUD_SHELL = 'cloud-shell',
   USE_OPENAI = 'openai',
+  USE_ZHIPU = 'zhipu',
 }
 
 export type ContentGeneratorConfig = {
@@ -76,7 +78,7 @@ export async function createContentGeneratorConfig(
   const googleCloudProject = process.env.GOOGLE_CLOUD_PROJECT || undefined;
   const googleCloudLocation = process.env.GOOGLE_CLOUD_LOCATION || undefined;
   const openaiApiKey = process.env.OPENAI_API_KEY;
-
+  const zhipuApiKey = process.env.ZHIPU_API_KEY;
   // Use runtime model from config if available, otherwise fallback to parameter or default
   const effectiveModel = model || DEFAULT_GEMINI_MODEL;
 
@@ -118,6 +120,15 @@ export async function createContentGeneratorConfig(
     contentGeneratorConfig.apiKey = openaiApiKey;
     contentGeneratorConfig.model =
       process.env.OPENAI_MODEL || DEFAULT_GEMINI_MODEL;
+
+    return contentGeneratorConfig;
+  }
+
+   // ZHIPU
+   if (authType === AuthType.USE_ZHIPU && zhipuApiKey) {
+    contentGeneratorConfig.apiKey = zhipuApiKey;
+    contentGeneratorConfig.model =
+      process.env.ZHIPU_MODEL || 'glm-4-flash'; // 默认使用glm-4-flash模型
 
     return contentGeneratorConfig;
   }
@@ -174,6 +185,21 @@ export async function createContentGenerator(
     // Always use OpenAIContentGenerator, logging is controlled by enableOpenAILogging flag
     return new OpenAIContentGenerator(config.apiKey, config.model, gcConfig);
   }
+  
+  // Check for Zhipu API key
+  if (config.authType === AuthType.USE_ZHIPU) {
+    if (!config.apiKey) {
+      throw new Error('Zhipu API key is required');
+    }
+
+    // 动态导入以避免循环依赖
+    const { ZhipuContentGenerator } = await import(
+      './zhipuContentGenerator.js'
+    );
+
+    return new ZhipuContentGenerator(config.apiKey, config.model, gcConfig);
+  }
+
 
   throw new Error(
     `Error creating contentGenerator: Unsupported authType: ${config.authType}`,
